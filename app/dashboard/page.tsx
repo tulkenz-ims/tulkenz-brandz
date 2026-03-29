@@ -47,26 +47,11 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const init = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { router.push('/login'); return; }
-
-      // Get org for this user
-      const { data: emp } = await supabase
-        .from('employees')
-        .select('organization_id')
-        .eq('email', user.email!)
-        .single();
-
-      if (!emp) {
-        const { data: org } = await supabase
-          .from('organizations')
-          .select('id')
-          .limit(1)
-          .single();
-        if (org) setOrgId(org.id);
-      } else {
-        setOrgId(emp.organization_id);
-      }
+      const stored = localStorage.getItem('brandz_user');
+      if (!stored) { router.push('/login'); return; }
+      const user = JSON.parse(stored);
+      if (!user?.organization_id) { router.push('/login'); return; }
+      setOrgId(user.organization_id);
       setLoading(false);
     };
     init();
@@ -116,7 +101,7 @@ export default function DashboardPage() {
   };
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    localStorage.removeItem('brandz_user');
     router.push('/login');
   };
 
