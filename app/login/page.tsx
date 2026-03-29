@@ -6,15 +6,14 @@ import { useRouter } from 'next/navigation';
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [pin, setPin] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    if (!email || !password) { setError('Email and access code required'); return; }
-    if (password.length < 4) { setError('Invalid access code'); return; }
+    if (!email || !pin) { setError('Email and PIN required'); return; }
     setLoading(true);
     try {
       const { data: user, error: userError } = await supabase
@@ -22,8 +21,9 @@ export default function LoginPage() {
         .select('*')
         .eq('email', email.toLowerCase())
         .single();
-      if (userError || !user) { setError('Invalid email or access code'); setLoading(false); return; }
-      if (!['super_admin', 'platform_admin', 'admin'].includes(user.role)) {
+      if (userError || !user) { setError('Invalid email or PIN'); setLoading(false); return; }
+      if (user.pin !== pin) { setError('Invalid email or PIN'); setLoading(false); return; }
+      if (!['super_admin','superadmin','platform_admin','admin'].includes(user.role)) {
         setError('Access denied — Super Admin only'); setLoading(false); return;
       }
       localStorage.setItem('brandz_user', JSON.stringify({
@@ -60,8 +60,8 @@ export default function LoginPage() {
               <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="your@email.com" style={inp} />
             </div>
             <div style={{ marginBottom: 20 }}>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#666', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 6 }}>Access Code</label>
-              <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Enter your access code" style={inp} />
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#666', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 6 }}>PIN</label>
+              <input type="password" value={pin} onChange={e => setPin(e.target.value)} placeholder="Enter your PIN" maxLength={6} style={inp} />
             </div>
             {error && <div style={{ background: '#FFF0F0', border: '1px solid #FFCCCC', borderRadius: 8, padding: '10px 12px', marginBottom: 16, fontSize: 13, color: '#CC2233' }}>{error}</div>}
             <button type="submit" disabled={loading}
